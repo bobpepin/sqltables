@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# We are forced to implement the garbage collection mechanism in Database since
 # "Attempting to DROP a table gets an SQLITE_LOCKED error if there are any active statements
 # belonging to the same database connection"
 # https://sqlite.org/forum/forumpost/433d2fdb07?raw
@@ -79,14 +80,16 @@ class Database:
         self._conn.executemany(f"insert into {name} values ({value_spec})", values)
         return Table(name=name, db=self)
 
+    def create_function(self, name, nargs, fn):
+        return self._conn.create_function(name, nargs, fn)
 
 class RowIterator:
     def __init__(self, statement, table):
+        self.statement = statement
+        self.active = True
+        self.table = table
         cur = table.db._execute(statement)
         self._cur = cur
-        self.active = True
-        self.statement = statement
-        self.table = table
         self.column_names = [x[0] for x in cur.description]
         self.Row = namedtuple("Row", self.column_names, rename=True)
 
@@ -103,10 +106,12 @@ class RowIterator:
     def close(self):
         self._cur.close()
         self.active = False
-    
+        
     def __del__(self):
-        self.close()
-
+        if hasattr(self, "_cur"):
+            self._cur.close()
+        else:
+            logger.debug(f"In __del__ of {self!r}:{self.statement}: _cur attribute uninitialized")
 
 class Table:
     def __init__(self, name, db):
