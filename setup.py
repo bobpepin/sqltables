@@ -5,14 +5,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="sqltables",
-    version="1.0",
+    version="1.1",
     author="Bob Pepin",
     author_email="pypi@pepin.io",
     description="SQLite tables as first-class objects",
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
-        "Homepage": "https://github.com/bobpepin/sqltables",
+        "Source": "https://github.com/bobpepin/sqltables",
         "Documentation": "https://sqltables.readthedocs.io"
     },
     url="https://github.com/bobpepin/sqltables",
