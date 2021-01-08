@@ -5,6 +5,8 @@ This means that tables and views can be assigned to variables and used as parame
 
 Documentation: https://sqltables.readthedocs.io/
 
+Examples are in the `examples/` folder. The [Machine Learning](https://github.com/bobpepin/sqltables/blob/master/examples/Machine%20Learning.ipynb) example notebook should illustrate most features.
+
 ## Motivation
 
 Relational data schemas are a proven way of organizing data, that fit the majority of query and processing use cases. 
@@ -21,8 +23,6 @@ The main objects are tables, represented by the `Table` class and associated wit
 New tables are created with the `load_values` method on the Database object.
 Tables are queried with the `view` and `table` methods, which execute an SQL query and return a new `Table` object backed by a temporary view or table. 
 Within SQL queries, the special name `_` refers to the table associated with `self`.
-
-See the `examples/` folder for example usage, in particular the [Machine Learning Example](https://github.com/bobpepin/sqltables/blob/master/examples/Machine%20Learning.ipynb).
 
 A simple example:
 ```python
