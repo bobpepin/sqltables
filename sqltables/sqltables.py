@@ -110,7 +110,9 @@ class Database:
         """
         if name is None:
             name = self._generate_temp_name()
-        column_spec = ",".join(column_names)
+        quoted_column_names = ['"' + n.replace('"', '""') + '"' 
+                               for n in column_names]
+        column_spec = ",".join(quoted_column_names)
         value_spec = ",".join("?" for _ in column_names)
         self._execute(f"create temporary table {name} ({column_spec})")
         self._conn.executemany(f"insert into {name} values ({value_spec})", values)
