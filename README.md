@@ -3,7 +3,9 @@ SQLTables is a Python module that provides access to SQLite tables as first-clas
 
 This means that tables and views can be assigned to variables and used as parameters and return values of Python functions.
 
-API Documentation: https://sqltables.readthedocs.io/
+Documentation: https://sqltables.readthedocs.io/
+
+Examples are in the `examples/` folder. The [Machine Learning](https://github.com/bobpepin/sqltables/blob/master/examples/Machine%20Learning.ipynb) example notebook should illustrate most features.
 
 ## Motivation
 
@@ -46,4 +48,4 @@ square(values)
 |\'b\'|2|4|
 |\'c\'|3|9|
 
-See the `examples/` folder for more examples.
+
