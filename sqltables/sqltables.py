@@ -108,14 +108,20 @@ class Database:
             Table: A new Table object that can be used to query the created table.
         
         """
+        temporary = "temporary"
         if name is None:
             name = self._generate_temp_name()
+        else:
+            temporary = ""
         quoted_column_names = ['"' + n.replace('"', '""') + '"' 
                                for n in column_names]
         column_spec = ",".join(quoted_column_names)
         value_spec = ",".join("?" for _ in column_names)
-        self._execute(f"create temporary table {name} ({column_spec})")
-        self._conn.executemany(f"insert into {name} values ({value_spec})", values)
+        with self._conn:
+            self._execute(f"create {temporary} table {name} ({column_spec})")
+            self._conn.executemany(
+                f"insert into {name} values ({value_spec})", 
+                values)
         return Table(name=name, db=self)
 
     def create_function(self, name, nargs, fn):
