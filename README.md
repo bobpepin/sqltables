@@ -1,5 +1,5 @@
 # SQLTables
-SQLTables is a Python module that provides access to SQLite tables as first-class objects.
+SQLTables is a Python module that provides access to SQLite and PostgreSQL tables as first-class objects.
 
 This means that tables and views can be assigned to variables and used as parameters and return values of Python functions.
 

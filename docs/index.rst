@@ -33,10 +33,19 @@ See the `examples/` folder in the source repository for usage examples.
 API Reference
 -----------------
 
-.. py:module:: sqltables
+.. py:module:: sqltables.generic
 .. autoclass:: Database
    :members:
 
+.. py:module:: sqltables.sqlite
+.. autoclass:: Database
+   :members:
+
+.. py:module:: sqltables.postgresql
+.. autoclass:: Database
+   :members:
+
+.. py:module:: sqltables.sqltables
 .. autoclass:: Table
    :members:
    :special-members: __iter__

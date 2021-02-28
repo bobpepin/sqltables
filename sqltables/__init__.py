@@ -1,1 +1,3 @@
-from .sqltables import *
+from . import sqlite
+
+Database = sqlite.Database
