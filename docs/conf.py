@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'SQLTables'
-copyright = '2020, Bob Pepin'
+copyright = '2021, Bob Pepin'
 author = 'Bob Pepin'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '1.2'
 
 
 # -- General configuration ---------------------------------------------------
