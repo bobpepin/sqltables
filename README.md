@@ -20,7 +20,7 @@ The goal of this module is to provide a high performance relational data structu
 ## Main Concepts and Example
 
 The main objects are tables, represented by the `Table` class and associated with a `Database`. 
-New tables are created with the `load_values` method on the Database object.
+New tables are created with the `create_table` method on the Database object.
 Tables are queried with the `view` and `table` methods, which execute an SQL query and return a new `Table` object backed by a temporary view or table. 
 Within SQL queries, the special name `_` refers to the table associated with `self`.
 
@@ -28,7 +28,7 @@ A simple example:
 ```python
 db = sqltables.Database()
 rows = [["a", 1], ["b", 2], ["c", 3]]
-values = db.load_values(rows, column_names=["name", "val"])
+values = db.create_table(rows=rows, column_names=["name", "val"])
 values
 ```
 |name|val|

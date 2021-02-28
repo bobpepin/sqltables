@@ -101,7 +101,7 @@ class Database:
         weakref.finalize(result_iterator, self._garbage_collect)
         return result_iterator
     
-    def create_table(self, values=None, column_names=[], column_types={}, name=None):
+    def create_table(self, rows=None, column_names=[], column_types={}, name=None):
         """Create a new table.
         
         Args:
@@ -128,15 +128,15 @@ class Database:
         with self._conn:
             self._execute(f"create {temporary} table {name} ({column_spec})")
             result = Table(name=name, db=self)
-            if values is not None:
-                self._insert_values(result, values, column_names=column_names)
+            if rows is not None:
+                self._insert_values(result, rows, column_names=column_names)
         if temporary == "temporary":
             weakref.finalize(result, self._drop, f"drop table {name}")
         return result
 
     # Use create_table instead
     def load_values(self, values, *, column_names, name=None):
-        return self.create_table(values=values, column_names=column_names, name=name)
+        return self.create_table(rows=values, column_names=column_names, name=name)
     
     def drop_table(self, table_name):
         """Drop a table from the database.
