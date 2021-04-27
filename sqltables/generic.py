@@ -37,20 +37,24 @@ class Database:
         return name
 
     def quote_name(self, name):
-        return '"' + name.replace('"', '""') + '"'
+        return ".".join(['"' + part.replace('"', '""') + '"' for part in name.split(".")])
     
     def _execute(self, statement, parameters=None):
         cursor = self._conn.cursor()
-        if parameters is not None:
-            logger.debug(f"[{self!r}] Executing {statement!r} with parameters {parameters!r}")
-            cursor.execute(statement, parameters)
-        else:
-            logger.debug(f"[{self!r}] Executing {statement!r}")
-            cursor.execute(statement)
+        try:
+            if parameters is not None:
+                logger.debug(f"[{self!r}] Executing {statement!r} with parameters {parameters!r}")
+                cursor.execute(statement, parameters)
+            else:
+                logger.debug(f"[{self!r}] Executing {statement!r}")
+                cursor.execute(statement)
+        except:
+            cursor.close()
+            raise
         return cursor
     
     def _drop(self, statement):
-        self._execute(statement)
+        self.execute(statement)
 
     def _garbage_collect(self):
         self._active_iterators = weakref.WeakSet(x for x in self._active_iterators if x.active)
@@ -58,7 +62,7 @@ class Database:
             logger.debug(f"[{self!r}] Starting GC on database {self.name!r} {self!r}")            
             while self._gc_statements:
                 statement = self._gc_statements.popleft()
-                self._execute(statement)
+                self.execute(statement)
     
     def query(self, select_stmt, kind="view", parameters=None, bindings={}):
         """Execute an SQL select statement.
@@ -94,6 +98,10 @@ class Database:
         weakref.finalize(result, self._drop, f"drop {kind} {result_name}")
         return result
 
+    def execute(self, statement, parameters=None):
+        cur = self._execute(statement, parameters)
+        cur.close()
+    
     def _iterate(self, table):
         statement = f"select * from {table.name}"
         result_iterator = RowIterator(statement, table)
@@ -126,7 +134,7 @@ class Database:
         column_spec = ",".join([f'{q} {column_types.get(x, self.default_column_type)}' for q,x in zip(quoted_column_names, column_names)])
         value_spec = ",".join("?" for _ in column_names)
         with self._conn:
-            self._execute(f"create {temporary} table {name} ({column_spec})")
+            self.execute(f"create {temporary} table {name} ({column_spec})")
             result = Table(name=name, db=self)
             if rows is not None:
                 self._insert_values(result, rows, column_names=column_names)
@@ -134,7 +142,10 @@ class Database:
             weakref.finalize(result, self._drop, f"drop table {name}")
         return result
 
-    # Use create_table instead
+    def open_table(self, name):
+        return Table(name=name, db=self)
+    
+    # Deprecated, use create_table instead
     def load_values(self, values, *, column_names, name=None):
         return self.create_table(rows=values, column_names=column_names, name=name)
     
@@ -145,16 +156,25 @@ class Database:
             table_name: The name of the table to drop.
         """
         quoted_name = self.quote_name(table_name)
-        self._execute(f"drop table {quoted_name}")
+        self.execute(f"drop table {quoted_name}")
 
+    def close(self):
+        self._conn.close()
+        
     def _insert_values(self, table, values, column_names=None):
         if column_names is None:
             it = iter(table)
             column_names = it.column_names
             it.close()
-        value_spec = ",".join(self.value_placeholder for _ in column_names)            
+        name = self.quote_name(table.name)
         with self._conn:
             cursor = self._conn.cursor()
-            cursor.executemany(f"insert into {table.name} values ({value_spec})", values)
-
-
+            try:
+                if isinstance(values, Table):
+                    values_name = self.quote_name(values.name)
+                    cursor.execute(f"insert into {name} select * from {values_name}")
+                else:
+                    value_spec = ",".join(self.value_placeholder for _ in column_names)            
+                    cursor.executemany(f"insert into {name} values ({value_spec})", values)
+            finally:
+                cursor.close()
