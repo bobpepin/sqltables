@@ -28,6 +28,7 @@ class Database:
         self.default_column_type = "text"
         self.value_placeholder = "?"
         self.temporary_prefix = "temp_"
+        self.temporary_modifier = "temporary"
 
     def _generate_temp_name(self, prefix=None):
         if prefix is None:
@@ -91,7 +92,7 @@ class Database:
         ]
         with_stmt = "with " + ", ".join(with_clauses) if with_clauses else ""
         result_name = self._generate_temp_name()
-        statement = f"create temporary {kind} {result_name} as {with_stmt} {select_stmt}"
+        statement = f"create {self.temporary_modifier} {kind} {result_name} as {with_stmt} {select_stmt}"
         self._execute(statement, parameters)
         result = Table(name=result_name, db=self)
         result.bindings = bindings
@@ -124,11 +125,13 @@ class Database:
         Returns:
             Table: A new Table object that can be used to manipulate the created table.
         """
-        temporary = "temporary"
+        is_temporary = True
+        temporary = self.temporary_modifier
         if name is None:
             name = self._generate_temp_name()
         else:
             temporary = ""
+            is_temporary = False
         quoted_column_names = ['"' + n.replace('"', '""') + '"' 
                                for n in column_names]
         column_spec = ",".join([f'{q} {column_types.get(x, self.default_column_type)}' for q,x in zip(quoted_column_names, column_names)])
@@ -138,7 +141,7 @@ class Database:
             result = Table(name=name, db=self)
             if rows is not None:
                 self._insert_values(result, rows, column_names=column_names)
-        if temporary == "temporary":
+        if is_temporary:
             weakref.finalize(result, self._drop, f"drop table {name}")
         return result
 
