@@ -84,7 +84,7 @@ class Database:
             
         """
         if re.match(r"\s*with\b", select_stmt):
-            raise ValueError("sqltables: with clause not supported in query, please use bindings instead")
+            raise ValueError("sqltables: with clause not supported in query, please use the bindings parameter instead")
         preamble = []
         with_clauses = [
             f"{name} as (select * from {table.name})"

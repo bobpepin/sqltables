@@ -31,6 +31,8 @@ class RowIterator:
         return self
         
     def __next__(self):
+        if not self.active:
+            raise StopIteration        
         try:
             return self.Row._make(next(self._cur))
         except StopIteration:
