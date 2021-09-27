@@ -39,21 +39,35 @@ class Database:
 
     def quote_name(self, name):
         return ".".join(['"' + part.replace('"', '""') + '"' for part in name.split(".")])
-    
-    def _execute(self, statement, parameters=None):
-        cursor = self._conn.cursor()
-        try:
-            if parameters is not None:
-                logger.debug(f"[{self!r}] Executing {statement!r} with parameters {parameters!r}")
-                cursor.execute(statement, parameters)
-            else:
-                logger.debug(f"[{self!r}] Executing {statement!r}")
-                cursor.execute(statement)
-        except:
-            cursor.close()
-            raise
-        return cursor
-    
+
+    def _cursor(self, cursor_type):
+        return self._conn.cursor()
+
+    def _execute_query(self, *args, **kwargs):
+        return self._execute(*args, **kwargs)
+
+    def _execute(self, statement, parameters=None, cursor_type="client"):
+        with self._conn:
+            cursor = self._cursor(cursor_type)
+            try:
+                if parameters is not None:
+                    logger.debug(f"[{self!r}] Executing {statement!r} with parameters {parameters!r}")
+                    cursor.execute(statement, parameters)
+                else:
+                    logger.debug(f"[{self!r}] Executing {statement!r}")
+                    cursor.execute(statement)
+            except:
+                cursor.close()
+                raise
+            return cursor
+
+    def _iterate(self, table):
+        statement = f"select * from {table.name}"
+        result_iterator = RowIterator(statement, table)
+        self._active_iterators.add(result_iterator)
+        weakref.finalize(result_iterator, self._garbage_collect)
+        return result_iterator
+
     def _drop(self, statement):
         self.execute(statement)
 
@@ -93,7 +107,7 @@ class Database:
         with_stmt = "with " + ", ".join(with_clauses) if with_clauses else ""
         result_name = self._generate_temp_name()
         statement = f"create {self.temporary_modifier} {kind} {result_name} as {with_stmt} {select_stmt}"
-        self._execute(statement, parameters)
+        self.execute(statement, parameters)
         result = Table(name=result_name, db=self)
         result.bindings = bindings
         weakref.finalize(result, self._drop, f"drop {kind} {result_name}")
@@ -102,14 +116,7 @@ class Database:
     def execute(self, statement, parameters=None):
         cur = self._execute(statement, parameters)
         cur.close()
-    
-    def _iterate(self, table):
-        statement = f"select * from {table.name}"
-        result_iterator = RowIterator(statement, table)
-        self._active_iterators.add(result_iterator)
-        weakref.finalize(result_iterator, self._garbage_collect)
-        return result_iterator
-    
+
     def create_table(self, rows=None, column_names=[], column_types={}, name=None):
         """Create a new table.
         
@@ -135,7 +142,6 @@ class Database:
         quoted_column_names = ['"' + n.replace('"', '""') + '"' 
                                for n in column_names]
         column_spec = ",".join([f'{q} {column_types.get(x, self.default_column_type)}' for q,x in zip(quoted_column_names, column_names)])
-        value_spec = ",".join("?" for _ in column_names)
         with self._conn:
             self.execute(f"create {temporary} table {name} ({column_spec})")
             result = Table(name=name, db=self)

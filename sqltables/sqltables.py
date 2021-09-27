@@ -22,7 +22,7 @@ class RowIterator:
         self.statement = statement
         self.active = True
         self.table = table
-        cur = table.db._execute(statement)
+        cur = table.db._execute_query(statement, cursor_type="server")
         self._cur = cur
         self.column_names = [x[0] for x in cur.description]
         self.Row = namedtuple("Row", self.column_names, rename=True)

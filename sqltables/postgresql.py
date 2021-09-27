@@ -15,7 +15,22 @@ class Database (generic.Database):
         super().__init__(conn)
         self.name = name
         self.value_placeholder = "%s"  
-        
+
+    def _cursor(self, cursor_type):
+        if cursor_type == "client":
+            return self._conn.cursor()
+        elif cursor_type == "server":
+            cursor_name = self._generate_temp_name(prefix="cursor")
+            return self._conn.cursor(name=cursor_name, withhold=True)
+        else:
+            raise ValueError(f"Invalid cursor type: {cursor_type!r}")
+
+    def _execute_query(self, statement, parameters=None, cursor_type="client"):
+        cur = self._execute(statement, parameters, cursor_type=cursor_type)
+        if cursor_type == "server":
+            cur.fetchmany(0) # Force PostgreSQL to populate cur.description
+        return cur
+
     def _insert_values(self, table, values, column_names=None):
         def quote_copy_text(value):
             if value is None:
@@ -39,5 +54,5 @@ class Database (generic.Database):
         with self._conn:
             cursor = self._conn.cursor()
             cursor.copy_from(buf, quoted_name)
-        
+
 
