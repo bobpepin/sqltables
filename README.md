@@ -7,16 +7,6 @@ Documentation: https://sqltables.readthedocs.io/
 
 Examples are in the `examples/` folder. The [Machine Learning](https://github.com/bobpepin/sqltables/blob/master/examples/Machine%20Learning.ipynb) example notebook should illustrate most features.
 
-## Motivation
-
-Relational data schemas are a proven way of organizing data, that fit the majority of query and processing use cases. 
-
-SQL is a powerful query language, that generally maintains high readability and is familiar to most people working with data. 
-
-SQLite is a powerful relational database, part of the Python standard library, that supports both in-memory and out-of-memory processing.
-
-The goal of this module is to provide a high performance relational data structure that integrates seamlessly with Python's features for structuring programs, such as control flow constructs, functions or classes.
-
 ## Main Concepts and Example
 
 The main objects are tables, represented by the `Table` class and associated with a `Database`. 
