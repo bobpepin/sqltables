@@ -40,6 +40,9 @@ class Database:
     def quote_name(self, name):
         return ".".join(['"' + part.replace('"', '""') + '"' for part in name.split(".")])
 
+    def _transaction(self):
+        return self._conn
+    
     def _cursor(self, cursor_type):
         return self._conn.cursor()
 
@@ -47,7 +50,7 @@ class Database:
         return self._execute(*args, **kwargs)
 
     def _execute(self, statement, parameters=None, cursor_type="client"):
-        with self._conn:
+        with self._transaction():
             cursor = self._cursor(cursor_type)
             try:
                 if parameters is not None:
@@ -142,7 +145,7 @@ class Database:
         quoted_column_names = ['"' + n.replace('"', '""') + '"' 
                                for n in column_names]
         column_spec = ",".join([f'{q} {column_types.get(x, self.default_column_type)}' for q,x in zip(quoted_column_names, column_names)])
-        with self._conn:
+        with self._transaction():
             self.execute(f"create {temporary} table {name} ({column_spec})")
             result = Table(name=name, db=self)
             if rows is not None:
@@ -176,8 +179,8 @@ class Database:
             column_names = it.column_names
             it.close()
         name = self.quote_name(table.name)
-        with self._conn:
-            cursor = self._conn.cursor()
+        with self._transaction():
+            cursor = self._cursor("client")
             try:
                 if isinstance(values, Table):
                     values_name = self.quote_name(values.name)

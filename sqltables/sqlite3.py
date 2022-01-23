@@ -35,7 +35,7 @@ class Database (generic.Database):
         """        
         quoted_table_name = self.quote_name(table_name)
         temp_name = self._generate_temp_name(prefix="_drop_")
-        with self._conn:
+        with self._transaction():
             self.execute(f"alter table {quoted_table_name} rename to {temp_name}")
         self._drop(f"drop table {temp_name}")        
         

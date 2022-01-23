@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import io
 import psycopg2
 from . import generic
@@ -14,8 +15,21 @@ class Database (generic.Database):
         conn = psycopg2.connect(name)
         super().__init__(conn)
         self.name = name
-        self.value_placeholder = "%s"  
+        self.value_placeholder = "%s"
+        self._in_transaction = False
 
+    @contextmanager
+    def _transaction(self):
+        if self._in_transaction:
+            yield None
+        else:
+            self._in_transaction = True
+            try:
+                with self._conn:
+                    yield None
+            finally:
+                self._in_transaction = False
+        
     def _cursor(self, cursor_type):
         if cursor_type == "client":
             return self._conn.cursor()
@@ -50,9 +64,14 @@ class Database (generic.Database):
             return buf
         
         buf = encode_rows(values)
-        quoted_name = self.quote_name(table.name)
-        with self._conn:
+        # quoted_name = self.quote_name(table.name)
+        # FIXME: behaviour changed in psycopg 2.9, need to use copy_expert to allow schema and consistent behaviour
+        quoted_name = table.name
+        with self._transaction():
             cursor = self._conn.cursor()
-            cursor.copy_from(buf, quoted_name)
+            try:
+                cursor.copy_from(buf, quoted_name)
+            finally:
+                cursor.close()
 
 
