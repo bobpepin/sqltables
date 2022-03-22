@@ -26,7 +26,7 @@ class Database (generic.Database):
         self._gc_statements.append(statement)
         self._garbage_collect()        
         
-    def drop_table(self, table_name):
+    def drop_table(self, table_name, if_exists=False):
         """Drop a table from the database. To work around locking issues, the table is first 
         renamed and then dropped once all active iterators on the connection have ended.
         
@@ -35,8 +35,14 @@ class Database (generic.Database):
         """        
         quoted_table_name = self.quote_name(table_name)
         temp_name = self._generate_temp_name(prefix="_drop_")
-        with self._transaction():
-            self.execute(f"alter table {quoted_table_name} rename to {temp_name}")
+        try:
+            with self._transaction():
+                self.execute(f"alter table {quoted_table_name} rename to {temp_name}")
+        except sqlite3.OperationalError as err:
+            if if_exists and len(err.args) > 0 and err.args[0].startswith("no such table:"):
+                return
+            else:
+                raise
         self._drop(f"drop table {temp_name}")        
         
     def create_function(self, name, nargs, fn):

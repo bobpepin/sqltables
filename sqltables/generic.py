@@ -80,6 +80,7 @@ class Database:
             logger.debug(f"[{self!r}] Starting GC on database {self.name!r} {self!r}")            
             while self._gc_statements:
                 statement = self._gc_statements.popleft()
+                # Not catching exceptions here, for the time being
                 self.execute(statement)
     
     def query(self, select_stmt, kind="view", parameters=None, bindings={}):
@@ -161,14 +162,15 @@ class Database:
     def load_values(self, values, *, column_names, name=None):
         return self.create_table(rows=values, column_names=column_names, name=name)
     
-    def drop_table(self, table_name):
+    def drop_table(self, table_name, if_exists=False):
         """Drop a table from the database.
         
         Args:
             table_name: The name of the table to drop.
         """
         quoted_name = self.quote_name(table_name)
-        self.execute(f"drop table {quoted_name}")
+        ie = " if exists" if if_exists else ""
+        self.execute(f"drop table{ie} {quoted_name}")
 
     def close(self):
         self._conn.close()
