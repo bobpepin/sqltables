@@ -2,11 +2,14 @@ from collections import namedtuple, deque
 import weakref
 import re
 import logging
+import collections.abc
 
 from .sqltables import Table, RowIterator
 
 logger = logging.getLogger(__name__)
 
+class SQLObjectMapping (collections.abc.Mapping):
+    pass
 
 # We are forced to implement a garbage collection mechanism in Database since
 # "Attempting to DROP a table gets an SQLITE_LOCKED error if there are any active statements
@@ -162,15 +165,14 @@ class Database:
     def load_values(self, values, *, column_names, name=None):
         return self.create_table(rows=values, column_names=column_names, name=name)
     
-    def drop_table(self, table_name, if_exists=False):
+    def drop_table(self, table_name):
         """Drop a table from the database.
         
         Args:
             table_name: The name of the table to drop.
         """
         quoted_name = self.quote_name(table_name)
-        ie = " if exists" if if_exists else ""
-        self.execute(f"drop table{ie} {quoted_name}")
+        self.execute(f"drop table {quoted_name}")
 
     def close(self):
         self._conn.close()
