@@ -13,7 +13,8 @@ class SQLiteSchemaMapping (generic.SQLObjectMapping):
         self.db = db
         
     def __contains__(self, key):
-        return bool(self.schema.table("select name from _ where name = ?", parameters=[key]))
+        [[c]] = self.schema.table("select count(name) from _ where name = %s", parameters=[key])
+        return c > 0
     
     def __len__(self):
         [[count]] = self.schema.view("select count(*) from _")
