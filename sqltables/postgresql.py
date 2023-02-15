@@ -13,7 +13,8 @@ class InformationSchemaMapping (generic.SQLObjectMapping):
         self.db = db
         
     def __contains__(self, key):
-        return bool(self.schema.table("select table_name from _ where table_name = %s", parameters=[key]))
+        [[c]] = self.schema.table("select count(table_name) from _ where table_name = %s", parameters=[key])
+        return c > 0
     
     def __len__(self):
         [[count]] = self.schema.view("select count(*) from _")
