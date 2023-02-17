@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="sqltables",
-    version="1.7",
+    version="1.8",
     author="Bob Pepin",
     author_email="pypi@pepin.io",
     description="SQL tables as first-class objects",
